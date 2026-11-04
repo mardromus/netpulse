@@ -109,6 +109,8 @@ def capacity_forecast(entity: str, util: pd.Series, threshold: float = 80.0) -> 
         days = 0.0
     elif slope > 1e-6:
         days = (threshold - current) / slope
+        if days > 365:  # not a planning concern within a year
+            days = None
     return CapacityForecast(entity, current, slope, days, threshold)
 
 
