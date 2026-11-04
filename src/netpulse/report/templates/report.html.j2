@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>netpulse · {{ narrative.headline }}</title>
+{% if plotly_inline %}<script>{{ plotly_inline | safe }}</script>{% else %}<script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>{% endif %}
+<style>
+:root{--bg:#f4f5fb;--card:#fff;--ink:#1c2333;--muted:#6b7385;--line:#e6e8f0;--accent:#4338ca;--accent-soft:#eef0ff;--teal:#0e9384;--crit:#c0262d;--high:#e4572e;--med:#b54708;--low:#2e90fa;--ok:#067647}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:1180px;margin:0 auto;padding:30px 24px 64px}
+header{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;margin-bottom:18px}
+.brand{font-weight:800;font-size:24px;letter-spacing:-.02em}.brand span{color:var(--accent)}
+.meta{color:var(--muted);font-size:13px;text-align:right}
+.hero{background:linear-gradient(135deg,#312e81 0%,#4338ca 55%,#0e9384 140%);color:#fff;border-radius:18px;padding:26px 28px;margin-bottom:18px;box-shadow:0 10px 30px rgba(67,56,202,.18)}
+.hero h1{margin:6px 0 10px;font-size:26px;line-height:1.25;letter-spacing:-.01em}
+.hero p{margin:0;max-width:880px;color:#e6e8ff}
+.badges{display:flex;gap:8px;flex-wrap:wrap}
+.badge{font-size:12px;font-weight:600;padding:3px 10px;border-radius:999px;background:rgba(255,255,255,.16);color:#fff}
+.badge.ok{background:rgba(18,183,106,.25)}.badge.warn{background:rgba(247,144,9,.3)}
+.tiles{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:18px}
+.tile{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+.tile .v{font-size:24px;font-weight:750;letter-spacing:-.01em}.tile .k{font-size:12px;color:var(--muted)}
+.tile.crit .v{color:var(--crit)}.tile.high .v{color:var(--high)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px 24px;margin-bottom:18px}
+h2{font-size:12.5px;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);margin:0 0 12px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.sev{font-size:11px;font-weight:700;padding:2px 9px;border-radius:6px;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap}
+.sev.critical{background:var(--crit);color:#fff}.sev.high{background:#fee4e2;color:var(--high)}.sev.medium{background:#fef0c7;color:var(--med)}.sev.low{background:#d1e9ff;color:var(--low)}
+.inc{border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin-bottom:14px}
+.inc .top{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.inc .id{font-weight:700;color:var(--muted)}.inc .ti{font-weight:700;font-size:16px}
+.inc .when{color:var(--muted);font-size:13px;margin:4px 0 10px}
+.inc .story{margin:0 0 10px}
+.facts{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:10px 0}
+.fact{background:#f8f9fc;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:13px}
+.fact b{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:3px}
+table{width:100%;border-collapse:collapse;font-size:13.5px}th{text-align:left;font-size:12px;color:var(--muted);font-weight:600;border-bottom:1px solid var(--line);padding:7px 6px}
+td{border-bottom:1px solid #f0f2f6;padding:7px 6px}td.n{text-align:right;font-variant-numeric:tabular-nums}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12.5px}
+ol,ul{margin:4px 0 0;padding-left:20px}li{margin:4px 0}
+.muted{color:var(--muted)}.note{font-size:13px;color:var(--muted)}
+.chip{display:inline-block;font-size:12px;padding:2px 8px;border-radius:6px;background:var(--accent-soft);color:var(--accent);margin:2px 4px 2px 0}
+.chart{width:100%}
+footer{color:var(--muted);font-size:12px;text-align:center;margin-top:24px}
+@media(max-width:920px){.tiles{grid-template-columns:repeat(3,1fr)}.grid2,.facts{grid-template-columns:1fr}}
+</style>
+</head>
+<body><div class="wrap">
+<header>
+  <div><div class="brand">net<span>pulse</span></div><div class="muted" style="font-size:13px">network analytics &amp; anomaly report</div></div>
+  <div class="meta">{{ facts.period.start }} &rarr; {{ facts.period.end }}<br>{{ facts.counts.entities }} entities &middot; {{ points }} data points &middot; {{ facts.period.sample_interval_min }} min resolution</div>
+</header>
+
+<section class="hero">
+  <div class="badges">
+    <span class="badge">{{ "AI narrative · " ~ narrative.engine[3:] if narrative.engine.startswith("ai:") else "deterministic narrative" }}</span>
+    {% if narrative.verified %}<span class="badge ok">&#10003; every figure verified against the data</span>{% else %}<span class="badge warn">{{ narrative.removed_sentences }} unverifiable sentence(s) removed</span>{% endif %}
+    {% if facts.evaluation %}<span class="badge">detection F1 {{ facts.evaluation.f1 }} vs ground truth</span>{% endif %}
+  </div>
+  <h1>{{ narrative.headline }}</h1>
+  <p>{{ narrative.executive_summary }}</p>
+</section>
+
+<div class="tiles">
+  <div class="tile"><div class="v">{{ facts.counts.incidents }}</div><div class="k">incidents</div></div>
+  <div class="tile crit"><div class="v">{{ facts.counts.critical_incidents }}</div><div class="k">critical</div></div>
+  <div class="tile high"><div class="v">{{ facts.counts.high_incidents }}</div><div class="k">high</div></div>
+  <div class="tile"><div class="v">{{ peak_util }}</div><div class="k">peak link utilisation</div></div>
+  <div class="tile"><div class="v">{{ total_traffic }}</div><div class="k">traffic carried</div></div>
+  <div class="tile"><div class="v">{{ facts.data_quality | length }}</div><div class="k">data quality notes</div></div>
+</div>
+
+{% if charts.timeline %}
+<section class="card"><h2>Incident timeline (IST)</h2><div id="ch-timeline" class="chart"></div></section>
+{% endif %}
+
+<section class="card">
+  <h2>Incidents</h2>
+  {% if not incidents %}<p class="muted">No incidents detected in this period.</p>{% endif %}
+  {% for inc in incidents %}
+  <div class="inc" id="{{ inc.id }}">
+    <div class="top"><span class="id">{{ inc.id }}</span><span class="sev {{ inc.severity }}">{{ inc.severity }}</span><span class="ti">{{ inc.title }}</span></div>
+    <div class="when">{{ inc.start }} &rarr; {{ inc.end }} &middot; {{ inc.duration_min }} min &middot; {% for e in inc.entities %}<span class="chip">{{ e }}</span>{% endfor %}</div>
+    <p class="story">{{ narrative.incident_notes.get(inc.id, inc.probable_cause) }}</p>
+    <div class="facts">
+      <div class="fact"><b>Probable cause</b>{{ inc.probable_cause }}</div>
+      <div class="fact"><b>Impact</b>{{ inc.impact }}</div>
+      <div class="fact"><b>Recommended action</b>{{ inc.recommendation }}</div>
+    </div>
+    {% if charts.incidents.get(inc.id) %}<div id="ch-{{ inc.id }}" class="chart"></div>{% endif %}
+    <table><tr><th>metric</th><th>entity</th><th class="n">peak</th><th class="n">normal</th><th class="n">&times; normal</th></tr>
+    {% for metric, ev in inc.evidence.items() %}<tr><td class="mono">{{ metric }}</td><td class="mono">{{ ev.entity }}</td><td class="n">{{ ev.peak }}</td><td class="n">{{ ev.normal }}</td><td class="n">{{ ev.times_normal if ev.times_normal is not none else "&mdash;" | safe }}</td></tr>{% endfor %}
+    </table>
+  </div>
+  {% endfor %}
+</section>
+
+<div class="grid2">
+  <section class="card"><h2>Recommended actions</h2><ol>{% for r in narrative.recommendations %}<li>{{ r }}</li>{% endfor %}</ol></section>
+  <section class="card"><h2>Capacity outlook</h2><p>{{ narrative.capacity_outlook }}</p>
+    {% if facts.capacity %}<table><tr><th>link</th><th class="n">p95 util</th><th class="n">growth / day</th><th class="n">days to 80%</th></tr>
+    {% for c in facts.capacity %}<tr><td class="mono">{{ c.entity }}</td><td class="n">{{ c.current_p95_util_pct }}%</td><td class="n">{{ c.growth_points_per_day }}</td><td class="n">{{ c.days_to_80pct if c.days_to_80pct is not none else "&mdash;" | safe }}</td></tr>{% endfor %}</table>{% endif %}
+  </section>
+</div>
+
+{% if charts.capacity %}<section class="card"><h2>Utilisation trend and 30-day projection</h2><div id="ch-capacity" class="chart"></div></section>{% endif %}
+{% if charts.traffic %}<section class="card"><h2>Inbound traffic by interface (IST)</h2><div id="ch-traffic" class="chart"></div></section>{% endif %}
+<div class="grid2">
+{% if charts.heatmap %}<section class="card"><h2>When is {{ heatmap_entity }} busy? (IST)</h2><div id="ch-heatmap" class="chart"></div></section>{% endif %}
+{% if charts.latency %}<section class="card"><h2>Service p95 latency vs SLO</h2><div id="ch-latency" class="chart"></div></section>{% endif %}
+</div>
+
+<div class="grid2">
+<section class="card"><h2>Interfaces</h2><table><tr><th>interface</th><th class="n">avg in</th><th class="n">peak in</th><th class="n">p95 util</th><th class="n">trend/day</th></tr>
+{% for i in facts.interfaces %}<tr><td class="mono" title="{{ i.role }}">{{ i.name }}</td><td class="n">{{ i.rx_avg }}</td><td class="n">{{ i.rx_peak }}</td><td class="n">{{ i.util_p95_pct if i.util_p95_pct is defined else "&mdash;" | safe }}{% if i.util_p95_pct is defined %}%{% endif %}</td><td class="n">{{ i.trend_pct_per_day }}%</td></tr>{% endfor %}
+</table></section>
+<section class="card"><h2>Services</h2><table><tr><th>service</th><th class="n">req/s</th><th class="n">p95 typical</th><th class="n">p95 worst</th><th class="n">errors worst</th></tr>
+{% for s in facts.services %}<tr><td class="mono">{{ s.name }}</td><td class="n">{{ s.requests_typical if s.requests_typical is defined else "&mdash;" | safe }}</td><td class="n">{{ s.p95_latency_typical ~ " ms" if s.p95_latency_typical is defined else (s.latency_typical ~ " ms" if s.latency_typical is defined else "&mdash;") | safe }}</td><td class="n">{{ s.p95_latency_worst ~ " ms" if s.p95_latency_worst is defined else (s.latency_worst ~ " ms" if s.latency_worst is defined else "&mdash;") | safe }}</td><td class="n">{{ s.error_rate_worst ~ "%" if s.error_rate_worst is defined else "&mdash;" | safe }}</td></tr>{% endfor %}
+</table></section>
+</div>
+
+{% if facts.data_quality %}
+<section class="card"><h2>Data quality</h2><p class="note">These were handled automatically and are listed so you can trust (or fix) the monitoring itself.</p>
+<table><tr><th>kind</th><th>entity</th><th class="n">occurrences</th></tr>{% for q in facts.data_quality %}<tr><td>{{ q.kind.replace("_", " ") }}</td><td class="mono">{{ q.entity }}</td><td class="n">{{ q.occurrences }}</td></tr>{% endfor %}</table></section>
+{% endif %}
+
+{% if evaluation %}
+<section class="card"><h2>Detection quality vs ground truth</h2>
+<p>{{ evaluation.detected }}/{{ evaluation.events }} injected events detected &middot; {{ evaluation.false_alarms }} false alarms &middot; precision {{ evaluation.precision }} &middot; recall {{ evaluation.recall }} &middot; F1 {{ evaluation.f1 }} &middot; kind accuracy {{ evaluation.kind_accuracy }}</p>
+<table><tr><th>injected event</th><th>entity</th><th>matched incident</th><th>classified as</th><th class="n">detection delay</th></tr>
+{% for m in evaluation.matches %}<tr><td>{{ m.event.replace("_", " ") }}</td><td class="mono">{{ m.entity }}</td><td>{{ m.incident or "missed" }}</td><td>{{ (m.incident_kind or "").replace("_", " ") }}</td><td class="n">{{ m.delay_min if m.delay_min is not none else "&mdash;" | safe }} min</td></tr>{% endfor %}</table></section>
+{% endif %}
+
+<section class="card"><h2>How this report was made</h2>
+<p class="note">Counters were converted to rates (wraps corrected, resets dropped) and aligned to a {{ facts.period.sample_interval_min }}-minute grid. Each series was compared with a leave-one-day-out time-of-day baseline; points were flagged only when independent detectors agreed (seasonal robust z-score, local jump, STL residual, isolation forest across each entity's metrics) or when a CUSUM level shift or an operational threshold fired, and only if the change was large enough to matter. Related anomalies were grouped into incidents and classified by shape. {{ "The narrative was written by " ~ narrative.engine[3:] ~ " from a fact sheet and every number in it was checked against that fact sheet." if narrative.engine.startswith("ai:") else "The narrative was generated deterministically from the same facts." }} {{ narrative.notes }}</p></section>
+
+<footer>Generated by netpulse {{ version }} &middot; {{ generated }}</footer>
+</div>
+<script>
+const cfg={displayModeBar:false,responsive:true};
+const charts={{ charts_json | safe }};
+for(const [id,fig] of Object.entries(charts)){const el=document.getElementById(id); if(el&&window.Plotly){Plotly.newPlot(el,fig.data,fig.layout,cfg);}}
+</script>
+</body></html>
