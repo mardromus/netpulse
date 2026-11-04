@@ -51,3 +51,8 @@ def test_import_csv_and_quiet_generate(tmp_path):
     assert res.exit_code == 0 and "imported 2 samples" in res.output
     res = runner.invoke(app, ["eval", str(tmp_path / "i.db")])
     assert res.exit_code != 0
+
+
+def test_ask_command(db):
+    res = runner.invoke(app, ["ask", str(db), "which link needs a capacity upgrade?"])
+    assert res.exit_code == 0 and "core-rtr-1/xe-0/0/1" in res.output

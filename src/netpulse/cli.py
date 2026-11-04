@@ -196,6 +196,25 @@ def report(
     _write_reports(r, out, md, js, ai, inline)
 
 
+@app.command()
+def ask(
+    db: Path = typer.Argument(..., exists=True),
+    question: str = typer.Argument(..., help='e.g. "what happened to payments-svc?"'),
+    ai: bool = typer.Option(False, "--ai", help="answer with the LLM (numbers verified)"),
+):
+    """Ask a question about the analysis in plain language."""
+    from .ai.ask import ask as ask_fn
+    from .ai.facts import build_facts
+
+    r = _analyze(db)
+    a = ask_fn(question, build_facts(r), use_ai=ai)
+    console.print(a.answer)
+    meta = f"{a.engine}, confidence {a.confidence:.0%}" + ("" if a.verified else ", some sentences removed")
+    if a.incidents:
+        meta += ", incidents " + ", ".join(a.incidents)
+    console.print(f"[dim]({meta}){' ' + a.notes if a.notes else ''}[/]")
+
+
 @app.command("eval")
 def eval_(db: Path = typer.Argument(..., exists=True)):
     """Score detection against the ground truth stored with synthetic data."""
