@@ -147,6 +147,19 @@ def create_app(db: str | Path, live: bool = False, interval: float = 5.0,
 
         return render_html(build_report(r, use_ai=ai))
 
+    @app.post("/api/ask")
+    def ask_endpoint(body: dict):
+        q = str(body.get("question", "")).strip()
+        if not q:
+            raise HTTPException(400, "question is required")
+        r = state.result()
+        if not r:
+            raise HTTPException(409, "no data yet")
+        from ..ai.ask import ask
+        from ..ai.facts import build_facts
+
+        return ask(q, build_facts(r), use_ai=bool(body.get("ai"))).to_dict()
+
     @app.post("/api/analyze")
     def reanalyze():
         r = state.result(force=True)

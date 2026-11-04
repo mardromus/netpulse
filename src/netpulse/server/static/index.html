@@ -38,6 +38,8 @@ select{background:var(--panel2);color:var(--ink);border:1px solid var(--line);bo
 .card.anom{border-color:var(--crit);box-shadow:0 0 0 1px var(--crit) inset}
 .spark{height:34px}
 .feed{max-height:220px;overflow:auto;font-size:12.5px}.feed div{padding:5px 0;border-bottom:1px solid var(--line)}
+.ask{display:flex;gap:8px;align-items:center;margin-top:14px}.ask input[type=text],.ask #q{flex:1;background:var(--panel2);border:1px solid var(--line);border-radius:9px;color:var(--ink);padding:8px 10px;font:inherit}
+.ans{margin-top:10px;color:#dfe2f5;font-size:13.5px}.ans small{color:var(--muted)}
 .muted{color:var(--muted)}.right{display:flex;flex-direction:column;gap:20px}
 @media(max-width:1000px){.wrap{grid-template-columns:1fr}}
 </style>
@@ -59,6 +61,9 @@ select{background:var(--panel2);color:var(--ink);border:1px solid var(--line);bo
         <div class="tile crit"><div class="v" id="t-crit">–</div><div class="k">critical</div></div>
         <div class="tile high"><div class="v" id="t-high">–</div><div class="k">high</div></div>
         <div class="tile"><div class="v" id="t-f1">–</div><div class="k">F1 vs truth</div></div></div>
+      <form id="askf" class="ask"><input id="q" placeholder="Ask: what happened to payments-svc?" autocomplete="off">
+        <label class="muted"><input type="checkbox" id="askai"> AI</label><button class="btn primary">Ask</button></form>
+      <div id="ans" class="ans"></div>
     </div>
     <div class="panel" style="margin-top:20px"><h2>Incidents</h2><div id="incidents" class="muted">No incidents yet.</div></div>
   </div>
@@ -113,6 +118,9 @@ async function plot(inc){
   $("hint").textContent=s.anomalies.ts.length+" anomalous points";
   Plotly.react("chart",data,lay,{displayModeBar:false,responsive:true});
 }
+$("askf").onsubmit=async ev=>{ev.preventDefault();const q=$("q").value.trim();if(!q)return;$("ans").textContent="thinking…";
+  const r=await fetch("/api/ask",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({question:q,ai:$("askai").checked})});
+  const a=await r.json();$("ans").innerHTML=`${a.answer}<br><small>${a.engine} · confidence ${Math.round(a.confidence*100)}%${a.verified?" · figures verified":""}${a.incidents.length?" · "+a.incidents.join(", "):""}</small>`;};
 $("entity").onchange=()=>{fillMetrics();plot()};$("metric").onchange=()=>plot();
 $("refresh").onclick=async()=>{await fetch("/api/analyze",{method:"POST"});load()};
 // live mode

@@ -38,6 +38,12 @@ def test_incidents_entities_and_series(client):
     assert client.get("/api/series", params={"entity": "x", "metric": "y"}).status_code == 404
 
 
+def test_ask_endpoint(client):
+    a = client.post("/api/ask", json={"question": "what happened to payments-svc?"}).json()
+    assert a["engine"] == "keyword" and a["incidents"]
+    assert client.post("/api/ask", json={}).status_code == 400
+
+
 def test_report_and_reanalyze(client):
     html = client.get("/api/report").text
     assert html.startswith("<!DOCTYPE html>") and "INC-01" in html
