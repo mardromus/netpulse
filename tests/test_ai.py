@@ -6,15 +6,11 @@ from netpulse.ai.facts import build_facts
 from netpulse.ai.llm import LLMClient, LLMConfig, LLMError
 from netpulse.ai.narrator import ai_narrative, template_narrative
 from netpulse.ai.verify import drop_unverified_sentences, numbers_in, verify_text
-from netpulse.generate import GenConfig, generate
-from netpulse.pipeline import analyze
 
 
 @pytest.fixture(scope="module")
-def facts():
-    g = generate(GenConfig())
-    r = analyze(g.samples, {e.name: e for e in g.entities}, g.truth)
-    return build_facts(r)
+def facts(week_result):
+    return build_facts(week_result)
 
 
 def test_numbers_in_skips_ids_times_and_names():

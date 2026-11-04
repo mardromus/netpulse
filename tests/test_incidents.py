@@ -1,12 +1,10 @@
 import pandas as pd
 import pytest
 
-from netpulse.detect import detect
 from netpulse.evaluate import evaluate
-from netpulse.generate import FIREWALL, GATEWAY, PAYMENTS, UPLINK_A, UPLINK_B, GenConfig, generate
+from netpulse.generate import FIREWALL, GATEWAY, PAYMENTS, UPLINK_A, UPLINK_B
 from netpulse.incidents import build_incidents, group_segments
 from netpulse.model import Segment
-from netpulse.prep import prepare
 
 T = pd.Timestamp("2026-11-04T10:00:00Z")
 
@@ -42,12 +40,8 @@ def test_classification_shapes():
 
 
 @pytest.fixture(scope="module")
-def week():
-    g = generate(GenConfig())
-    p = prepare(g.samples, {e.name: e for e in g.entities})
-    d = detect(p)
-    incs = build_incidents(d.segments, lambda s: p.series(s.entity, s.metric))
-    return g, incs
+def week(generated, week_result):
+    return generated, week_result.incidents
 
 
 def test_generated_week_yields_one_incident_per_event(week):

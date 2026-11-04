@@ -8,10 +8,8 @@ from netpulse.report import build_report, render_html, render_json, render_markd
 
 
 @pytest.fixture(scope="module")
-def report():
-    g = generate(GenConfig())
-    r = analyze(g.samples, {e.name: e for e in g.entities}, g.truth)
-    return build_report(r)
+def report(week_result):
+    return build_report(week_result)
 
 
 def test_html_report_has_all_sections(report):

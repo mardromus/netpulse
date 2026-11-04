@@ -2,16 +2,15 @@ import pandas as pd
 import pytest
 from fastapi.testclient import TestClient
 
-from netpulse.generate import GenConfig, generate
 from netpulse.server.app import create_app
 from netpulse.server.live import LiveCollector, OnlineScorer
 from netpulse.store import Store
 
 
 @pytest.fixture(scope="module")
-def client(tmp_path_factory):
+def client(tmp_path_factory, generated):
     path = tmp_path_factory.mktemp("srv") / "d.db"
-    g = generate(GenConfig())
+    g = generated
     s = Store(path)
     s.write_entities(g.entities)
     s.write_samples(g.samples)

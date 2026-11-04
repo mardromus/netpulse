@@ -5,14 +5,11 @@ import pytest
 from netpulse.ai.ask import ask, keyword_answer
 from netpulse.ai.facts import build_facts
 from netpulse.ai.llm import LLMConfig
-from netpulse.generate import GenConfig, generate
-from netpulse.pipeline import analyze
 
 
 @pytest.fixture(scope="module")
-def facts():
-    g = generate(GenConfig())
-    return build_facts(analyze(g.samples, {e.name: e for e in g.entities}))
+def facts(week_result):
+    return build_facts(week_result)
 
 
 def test_keyword_answers(facts):

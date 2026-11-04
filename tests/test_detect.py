@@ -2,11 +2,9 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from netpulse.detect import DetectOptions, detect, detect_series
+from netpulse.detect import DetectOptions, detect_series
 from netpulse.detect.base import robust_sigma, seasonal_profile
 from netpulse.detect.methods import cusum, threshold
-from netpulse.generate import GenConfig, generate
-from netpulse.prep import prepare
 
 IDX = pd.date_range("2026-10-26", periods=288 * 7, freq="5min", tz="UTC")
 RNG = np.random.default_rng(1)
@@ -76,10 +74,8 @@ def test_threshold_rules():
 
 
 @pytest.fixture(scope="module")
-def generated_detection():
-    g = generate(GenConfig())
-    p = prepare(g.samples, {e.name: e for e in g.entities})
-    return g, p, detect(p, DetectOptions())
+def generated_detection(generated, week_result):
+    return generated, week_result.prepared, week_result.detection
 
 
 def test_every_injected_incident_is_found(generated_detection):
