@@ -47,9 +47,17 @@ def analyze(
     return AnalysisResult(p, d, incidents, ov, ev, source)
 
 
-def analyze_store(store: Store, opts: DetectOptions | None = None) -> AnalysisResult:
+def analyze_store(store: Store, opts: DetectOptions | None = None,
+                  last: pd.Timedelta | None = None) -> AnalysisResult:
+    """Analyse a store; ``last`` keeps only the final window (relative to the newest sample)."""
     samples = store.read_samples()
     if samples.empty:
         raise ValueError(f"{store.path} has no samples")
-    return analyze(samples, store.read_entities(), store.read_truth() or None, opts,
+    truth = store.read_truth() or None
+    if last is not None:
+        cutoff = samples["ts"].max() - last
+        samples = samples[samples["ts"] >= cutoff]
+        if truth:
+            truth = [t for t in truth if pd.Timestamp(t.end) >= cutoff] or None
+    return analyze(samples, store.read_entities(), truth, opts,
                    source=store.get_meta("source", "dataset"))
