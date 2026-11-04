@@ -108,7 +108,10 @@ def counter_to_rate(
         for width, name in ((WRAP32, "32-bit"), (WRAP64, "64-bit")):
             if prev < width:
                 cand = (width - prev + cur) / dt[i]
-                if typical == 0 or cand <= max(typical * 5, 1.0):
+                # a genuine wrap happens close to the boundary and gives a normal rate
+                near_edge = (width - prev) <= max(typical * dt[i] * 5, width * 0.01)
+                plausible = typical > 0 and cand <= typical * 5
+                if near_edge and plausible:
                     fixed = (cand, name)
                 break
         when = times[i + 1]
