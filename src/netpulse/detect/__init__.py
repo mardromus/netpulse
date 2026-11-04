@@ -42,7 +42,7 @@ class DetectOptions:
 FLOORS = {
     "traffic": (0.25, 0.0),
     "connections": (0.30, 20.0),
-    "errors": (0.0, 0.05),
+    "errors": (1.5, 0.05),  # at least 2.5x normal: error counters are bursty
     "latency": (0.30, 10.0),
     "saturation": (0.0, 15.0),
     "availability": (0.0, 0.5),
