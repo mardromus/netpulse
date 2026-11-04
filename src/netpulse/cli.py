@@ -51,13 +51,14 @@ def _eval_table(ev) -> Table:
     return t
 
 
-def _analyze(db: Path):
+def _analyze(db: Path, sensitivity: float = 1.0):
+    from .detect import DetectOptions
     from .pipeline import analyze_store
 
     if not db.exists():
         raise typer.BadParameter(f"{db} does not exist")
     with console.status("analysing"):
-        return analyze_store(Store(db))
+        return analyze_store(Store(db), DetectOptions(sensitivity=sensitivity))
 
 
 def _write_reports(result, html: Path | None, md: Path | None, js: Path | None, ai: bool, inline: bool):
@@ -161,9 +162,13 @@ def import_(
 
 
 @app.command()
-def detect(db: Path = typer.Argument(..., exists=True), as_json: bool = typer.Option(False, "--json")):
+def detect(
+    db: Path = typer.Argument(..., exists=True),
+    as_json: bool = typer.Option(False, "--json"),
+    sensitivity: float = typer.Option(1.0, help=">1 flags smaller deviations, <1 only larger ones"),
+):
     """Detect anomalies and print incidents."""
-    r = _analyze(db)
+    r = _analyze(db, sensitivity)
     if as_json:
         print(json.dumps([i.to_dict() for i in r.incidents], indent=2))
         return
@@ -184,9 +189,10 @@ def report(
     js: Path = typer.Option(None, "--json", help="also write JSON"),
     ai: bool = typer.Option(False, "--ai", help="write the narrative with an LLM (verified)"),
     inline: bool = typer.Option(False, "--inline", help="embed plotly.js for offline viewing"),
+    sensitivity: float = typer.Option(1.0, help="detector sensitivity multiplier"),
 ):
     """Build the analytics and anomaly report."""
-    r = _analyze(db)
+    r = _analyze(db, sensitivity)
     _write_reports(r, out, md, js, ai, inline)
 
 
