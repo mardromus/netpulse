@@ -49,8 +49,9 @@ CREATE TABLE IF NOT EXISTS meta (
 
 
 def _to_epoch(ts: pd.Series) -> pd.Series:
+    """UTC timestamps -> float unix seconds (independent of pandas' time unit)."""
     t = pd.to_datetime(ts, utc=True)
-    return t.astype("int64") / 1e9
+    return (t - pd.Timestamp("1970-01-01", tz="UTC")).dt.total_seconds()
 
 
 class Store:

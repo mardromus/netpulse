@@ -24,6 +24,7 @@ def test_roundtrip_samples(tmp_path):
     out = s.read_samples()
     assert len(out) == 3
     assert str(out["ts"].dt.tz) == "UTC"
+    assert out["ts"].iloc[0] == pd.Timestamp("2026-11-04T00:00:00Z")
     rx = s.read_samples(entity="r1/eth0", metric="rx_bytes")
     assert rx["value"].tolist() == [100.0, 400.0]
     assert s.series_keys() == [("r1/eth0", "rx_bytes"), ("svc", "latency_p95_ms")]
