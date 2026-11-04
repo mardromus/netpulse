@@ -21,8 +21,7 @@ that the report was built from. Answer ONLY from the facts; if they do not conta
 plainly. Quote numbers exactly as they appear in the facts and refer to incidents by id.
 Return JSON: {"answer": "2-5 sentences", "incidents": ["INC-02"], "confidence": 0.0-1.0}"""
 
-STOP = set("a an the of on in at to for is was were what which when where who why how did does do and or "
-           "with any this that there it its be been about happened happen my our".split())
+STOP = set(["a", "an", "the", "of", "on", "in", "at", "to", "for", "is", "was", "were", "what", "which", "when", "where", "who", "why", "how", "did", "does", "do", "and", "or", "with", "any", "this", "that", "there", "it", "its", "be", "been", "about", "happened", "happen", "my", "our"])
 
 
 @dataclass
