@@ -66,6 +66,7 @@ def template_narrative(facts: dict) -> Narrative:
     incs = sorted(facts["incidents"], key=lambda i: (-severity_rank(i["severity"]), i["id"]))
     c = facts["counts"]
     days = facts["period"]["days"]
+    days = int(days) if float(days).is_integer() else days
     if not incs:
         headline = f"Network healthy: no incidents across {c['entities']} entities"
         summary = (f"Over {days} days ({facts['period']['start']} to {facts['period']['end']}) no anomalies "
@@ -83,7 +84,10 @@ def template_narrative(facts: dict) -> Narrative:
             others = ", ".join(f"{i['id']} ({i['kind'].replace('_', ' ')})" for i in incs[1:4])
             parts.append(f"Other notable incidents: {others}.")
         summary = " ".join(parts)
-    notes = {i["id"]: f"{i['probable_cause']} Impact: {i['impact']}" for i in facts["incidents"]}
+    notes = {
+        i["id"]: f"{i['title']} started {i['start']} and lasted {i['duration_min']} min. {i['impact']}"
+        for i in facts["incidents"]
+    }
     cap = []
     for row in facts["capacity"]:
         d = row["days_to_80pct"]
