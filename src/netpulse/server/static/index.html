@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>netpulse dashboard</title>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
+<style>
+:root{--bg:#0f1220;--panel:#161a2e;--panel2:#1c2140;--ink:#e8eaf6;--muted:#8a90b2;--line:#262c4d;--accent:#7c74ff;--teal:#2ed3b7;--crit:#ff4d5e;--high:#ff8a4c;--med:#ffc24b;--low:#57a6ff}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(1200px 600px at 10% -10%,#22285a 0%,var(--bg) 55%);color:var(--ink);font:14px/1.55 Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;min-height:100vh}
+.top{display:flex;align-items:center;gap:16px;padding:16px 26px;border-bottom:1px solid var(--line);position:sticky;top:0;background:rgba(15,18,32,.85);backdrop-filter:blur(8px);z-index:5}
+.brand{font-weight:800;font-size:20px;letter-spacing:-.02em}.brand span{color:var(--accent)}
+.pill{font-size:12px;padding:3px 10px;border-radius:999px;background:var(--panel2);color:var(--muted)}
+.live{display:inline-flex;align-items:center;gap:7px;color:var(--teal)}.dot{width:8px;height:8px;border-radius:50%;background:var(--teal);box-shadow:0 0 0 0 rgba(46,211,183,.6);animation:p 1.6s infinite}
+@keyframes p{0%{box-shadow:0 0 0 0 rgba(46,211,183,.6)}70%{box-shadow:0 0 0 10px rgba(46,211,183,0)}100%{box-shadow:0 0 0 0 rgba(46,211,183,0)}}
+.sp{flex:1}.btn{border:1px solid var(--line);background:var(--panel2);color:var(--ink);padding:7px 13px;border-radius:9px;cursor:pointer;font:inherit;text-decoration:none}
+.btn:hover{border-color:var(--accent)}.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.wrap{padding:22px 26px;display:grid;grid-template-columns:360px 1fr;gap:20px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px}
+h2{font-size:11.5px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin:0 0 12px}
+.hero h1{font-size:20px;margin:0 0 8px;line-height:1.3}.hero p{color:#c4c8e4;margin:0}
+.tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:14px 0 0}
+.tile{background:var(--panel2);border-radius:12px;padding:10px 12px}.tile .v{font-size:22px;font-weight:750}.tile .k{font-size:11px;color:var(--muted)}
+.tile.crit .v{color:var(--crit)}.tile.high .v{color:var(--high)}
+.inc{border:1px solid var(--line);border-radius:12px;padding:12px 13px;margin-bottom:10px;cursor:pointer;transition:.15s;background:var(--panel)}
+.inc:hover,.inc.sel{border-color:var(--accent);background:var(--panel2)}
+.inc .t{display:flex;gap:8px;align-items:center}.inc .id{color:var(--muted);font-weight:700;font-size:12px}
+.inc .ti{font-weight:650;margin-top:4px}.inc .w{color:var(--muted);font-size:12px}
+.sev{font-size:10px;font-weight:800;padding:2px 7px;border-radius:5px;text-transform:uppercase;letter-spacing:.05em}
+.sev.critical{background:var(--crit);color:#fff}.sev.high{background:rgba(255,138,76,.18);color:var(--high)}.sev.medium{background:rgba(255,194,75,.16);color:var(--med)}.sev.low{background:rgba(87,166,255,.16);color:var(--low)}
+.cause{color:#c4c8e4;font-size:13px;margin-top:6px;display:none}.inc.sel .cause{display:block}
+select{background:var(--panel2);color:var(--ink);border:1px solid var(--line);border-radius:9px;padding:7px 10px;font:inherit;max-width:280px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+#chart{height:380px}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}
+.card{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.card .n{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.card .v{font-size:19px;font-weight:700}
+.card.anom{border-color:var(--crit);box-shadow:0 0 0 1px var(--crit) inset}
+.spark{height:34px}
+.feed{max-height:220px;overflow:auto;font-size:12.5px}.feed div{padding:5px 0;border-bottom:1px solid var(--line)}
+.muted{color:var(--muted)}.right{display:flex;flex-direction:column;gap:20px}
+@media(max-width:1000px){.wrap{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="top">
+  <div class="brand">net<span>pulse</span></div>
+  <span id="mode" class="pill">loading…</span>
+  <span id="samples" class="pill"></span>
+  <div class="sp"></div>
+  <button class="btn" id="refresh">Re-analyse</button>
+  <a class="btn" href="/api/report" target="_blank">Full report</a>
+  <a class="btn primary" href="/api/report?ai=1" target="_blank">AI report</a>
+</div>
+<div class="wrap">
+  <div>
+    <div class="panel hero"><h1 id="headline">Analysing…</h1><p id="summary"></p>
+      <div class="tiles"><div class="tile"><div class="v" id="t-inc">–</div><div class="k">incidents</div></div>
+        <div class="tile crit"><div class="v" id="t-crit">–</div><div class="k">critical</div></div>
+        <div class="tile high"><div class="v" id="t-high">–</div><div class="k">high</div></div>
+        <div class="tile"><div class="v" id="t-f1">–</div><div class="k">F1 vs truth</div></div></div>
+    </div>
+    <div class="panel" style="margin-top:20px"><h2>Incidents</h2><div id="incidents" class="muted">No incidents yet.</div></div>
+  </div>
+  <div class="right">
+    <div class="panel"><h2>Explorer</h2>
+      <div class="row"><select id="entity"></select><select id="metric"></select><span id="hint" class="muted"></span></div>
+      <div id="chart"></div>
+    </div>
+    <div class="panel" id="livebox" style="display:none"><h2>Live (this machine)</h2><div id="cards" class="cards"></div>
+      <h2 style="margin-top:16px">Live anomalies</h2><div id="feed" class="feed muted">None so far.</div></div>
+  </div>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+const fmtTime=t=>new Date(t).toLocaleString(undefined,{weekday:"short",hour:"2-digit",minute:"2-digit"});
+let entities=[];
+function fmt(v,m){if(v==null)return"–";if(m.endsWith("bps")){for(const[s,u]of[[1e9,"Gb/s"],[1e6,"Mb/s"],[1e3,"kb/s"]])if(Math.abs(v)>=s)return(v/s).toFixed(2)+" "+u;return v.toFixed(0)+" b/s"}
+ if(m.endsWith("_pct"))return v.toFixed(1)+"%";if(m.includes("latency"))return v.toFixed(1)+" ms";return Math.abs(v)>=1000?(v/1000).toFixed(1)+"k":v.toFixed(2)}
+const layout=(title)=>({paper_bgcolor:"rgba(0,0,0,0)",plot_bgcolor:"rgba(0,0,0,0)",font:{color:"#c4c8e4",family:"Inter,system-ui"},
+ margin:{l:60,r:16,t:20,b:36},xaxis:{gridcolor:"#262c4d"},yaxis:{gridcolor:"#262c4d",title:title},legend:{orientation:"h",y:1.1},hovermode:"x unified"});
+async function load(){
+  const s=await (await fetch("/api/summary")).json();
+  $("mode").innerHTML=s.live?'<span class="live"><span class="dot"></span>live</span>':"dataset";
+  $("samples").textContent=(s.samples||0).toLocaleString()+" samples";
+  if(s.live)$("livebox").style.display="";
+  if(!s.ready){$("headline").textContent="Collecting data…";$("summary").textContent="The first analysis runs once there are enough samples.";return}
+  $("headline").textContent=s.headline;$("summary").textContent=s.summary;
+  $("t-inc").textContent=s.counts.incidents;$("t-crit").textContent=s.counts.critical_incidents;$("t-high").textContent=s.counts.high_incidents;
+  $("t-f1").textContent=s.evaluation?s.evaluation.f1:"n/a";
+  const incs=await (await fetch("/api/incidents")).json();
+  const box=$("incidents");box.innerHTML="";if(!incs.length)box.innerHTML='<span class="muted">No incidents detected.</span>';
+  for(const i of incs){const d=document.createElement("div");d.className="inc";
+    d.innerHTML=`<div class="t"><span class="id">${i.id}</span><span class="sev ${i.severity}">${i.severity}</span><span class="w">${fmtTime(i.start)} · ${i.duration_min} min</span></div><div class="ti">${i.title}</div><div class="cause">${i.probable_cause}<br><br><b>Action:</b> ${i.recommendation}</div>`;
+    d.onclick=()=>{document.querySelectorAll(".inc").forEach(x=>x.classList.remove("sel"));d.classList.add("sel");const sg=i.segments[0];select(sg.entity,sg.metric,i)};
+    box.appendChild(d)}
+  entities=await (await fetch("/api/entities")).json();
+  $("entity").innerHTML=entities.map(e=>`<option>${e.name}</option>`).join("");
+  fillMetrics();if(incs.length)box.firstChild.click();else plot();
+}
+function fillMetrics(){const e=entities.find(x=>x.name==$("entity").value);$("metric").innerHTML=(e?e.metrics:[]).map(m=>`<option>${m}</option>`).join("")}
+function select(ent,met,inc){$("entity").value=ent;fillMetrics();$("metric").value=met;plot(inc)}
+async function plot(inc){
+  const e=$("entity").value,m=$("metric").value;if(!e||!m)return;
+  const r=await fetch(`/api/series?entity=${encodeURIComponent(e)}&metric=${encodeURIComponent(m)}`);if(!r.ok)return;
+  const s=await r.json();
+  const data=[{x:s.ts,y:s.baseline,name:"expected",mode:"lines",line:{color:"#6b72a8",dash:"dot",width:1.3}},
+    {x:s.ts,y:s.value,name:m,mode:"lines",line:{color:"#7c74ff",width:1.6}},
+    {x:s.anomalies.ts,y:s.anomalies.value,name:"anomalous",mode:"markers",marker:{color:"#ff4d5e",size:6}}];
+  const lay=layout(m);
+  if(inc){lay.shapes=[{type:"rect",xref:"x",yref:"paper",x0:inc.start,x1:inc.end,y0:0,y1:1,fillcolor:"rgba(255,77,94,.12)",line:{width:0}}];
+    const pad=36e5*12;lay.xaxis.range=[new Date(new Date(inc.start)-pad).toISOString(),new Date(+new Date(inc.end)+pad).toISOString()];}
+  $("hint").textContent=s.anomalies.ts.length+" anomalous points";
+  Plotly.react("chart",data,lay,{displayModeBar:false,responsive:true});
+}
+$("entity").onchange=()=>{fillMetrics();plot()};$("metric").onchange=()=>plot();
+$("refresh").onclick=async()=>{await fetch("/api/analyze",{method:"POST"});load()};
+// live mode
+const series={};
+function liveCard(p){const key=p.entity+"|"+p.metric;let s=series[key];
+  if(!s){if(!/(bps|cpu_pct|mem_pct|latency_ms|conn_established)$/.test(p.metric))return;
+    const el=document.createElement("div");el.className="card";el.innerHTML=`<div class="n" title="${p.entity}">${p.entity} · ${p.metric}</div><div class="v"></div><div class="spark"></div>`;
+    $("cards").appendChild(el);s=series[key]={el,x:[],y:[]};}
+  s.x.push(p.ts);s.y.push(p.value);if(s.x.length>120){s.x.shift();s.y.shift()}
+  s.el.querySelector(".v").textContent=fmt(p.value,p.metric);s.el.classList.toggle("anom",p.anomaly);
+  Plotly.react(s.el.querySelector(".spark"),[{x:s.x,y:s.y,mode:"lines",line:{color:p.anomaly?"#ff4d5e":"#2ed3b7",width:1.5},fill:"tozeroy",fillcolor:"rgba(46,211,183,.08)"}],
+    {margin:{l:0,r:0,t:0,b:0},paper_bgcolor:"rgba(0,0,0,0)",plot_bgcolor:"rgba(0,0,0,0)",xaxis:{visible:false},yaxis:{visible:false},showlegend:false},{staticPlot:true});
+  if(p.anomaly){const f=$("feed");if(f.classList.contains("muted")){f.classList.remove("muted");f.innerHTML=""}
+    const d=document.createElement("div");d.innerHTML=`<b>${fmtTime(p.ts)}</b> ${p.entity} ${p.metric} = ${fmt(p.value,p.metric)} <span class="muted">(z ${p.z})</span>`;f.prepend(d)}}
+async function startLive(){
+  const r=await fetch("/api/live/recent");if(!r.ok)return;const j=await r.json();j.points.forEach(liveCard);
+  const es=new EventSource("/api/live/stream");es.onmessage=ev=>{JSON.parse(ev.data).forEach(liveCard);$("samples").textContent="live";};
+  setInterval(load,60000);
+}
+load().then(()=>{if($("livebox").style.display==="")startLive()});
+</script>
+</body></html>
