@@ -67,4 +67,4 @@ def test_infer_step_and_prepare_derives_kpis():
     assert f["util_pct"].dropna().iloc[0] == pytest.approx(8.0)
     assert f["err_ratio_pct"].dropna().iloc[0] == pytest.approx(0.1)
     assert p.has("svc", "latency_p95_ms") and not p.has("svc", "rx_bps")
-    assert ("r1/eth0", "util_pct") in p.keys()
+    assert ("r1/eth0", "util_pct") in set(p.keys())

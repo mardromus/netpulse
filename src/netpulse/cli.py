@@ -98,7 +98,8 @@ def generate(
     quiet: bool = typer.Option(False, "--quiet", help="no injected incidents"),
 ):
     """Generate a realistic week of network telemetry with labelled incidents."""
-    from .generate import GenConfig, generate as gen
+    from .generate import GenConfig
+    from .generate import generate as gen
 
     g = gen(GenConfig(days=days, step_s=step, seed=seed, incidents=not quiet))
     if out.exists():

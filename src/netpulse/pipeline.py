@@ -7,7 +7,7 @@ from dataclasses import dataclass
 import pandas as pd
 
 from .analytics import overview
-from .detect import DetectOptions, Detection, detect
+from .detect import Detection, DetectOptions, detect
 from .evaluate import Evaluation, evaluate
 from .incidents import build_incidents
 from .model import Entity, Incident, TruthEvent

@@ -96,7 +96,6 @@ def _monotonic_rise(seg: Segment, values: pd.Series | None) -> bool:
 
 def classify(segs: list[Segment], series_lookup=None) -> dict:
     """Pick the incident kind and write human explanations from segment shapes."""
-    ents = sorted({s.entity for s in segs})
     traffic_down = [s for s in _has(segs, ("rx_bps", "tx_bps", "rx_pps", "tx_pps"), "down") if _ratio(s) < 0.1]
     traffic_up = [s for s in _has(segs, ("rx_bps", "tx_bps", "rx_pps", "tx_pps", "util_pct"), "up")]
     errors = _has(segs, ("rx_err", "tx_err", "err_ratio"), "up")

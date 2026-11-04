@@ -23,7 +23,7 @@ level_shift            a permanent +30% step in uplink A traffic (new customer)
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 
 import numpy as np
 import pandas as pd

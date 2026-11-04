@@ -35,9 +35,7 @@ class InterfaceCollector:
     def _wanted(self, nic: str) -> bool:
         if self.include:
             return nic in self.include
-        if self.skip_loopback and (nic == "lo" or nic.lower().startswith("loopback")):
-            return False
-        return True
+        return not (self.skip_loopback and (nic == "lo" or nic.lower().startswith("loopback")))
 
     def entities(self) -> list[Entity]:
         out = []

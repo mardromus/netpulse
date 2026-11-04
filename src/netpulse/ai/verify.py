@@ -67,10 +67,7 @@ def _decimals(x: float) -> int:
 
 def matches(claim: float, known: list[float], rel_tol: float = 0.03) -> bool:
     half_unit = 0.5 * 10 ** (-_decimals(claim)) if _decimals(claim) else 0.5
-    for k in known:
-        if abs(claim - k) <= max(rel_tol * abs(k), half_unit):
-            return True
-    return False
+    return any(abs(claim - k) <= max(rel_tol * abs(k), half_unit) for k in known)
 
 
 @dataclass
