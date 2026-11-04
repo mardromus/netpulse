@@ -1,0 +1,8 @@
+.git
+.github
+out
+*.db
+tests
+.pytest_cache
+.ruff_cache
+__pycache__
