@@ -63,3 +63,12 @@ def test_last_window_limits_analysis(db):
     incidents = json.loads(res.output)
     kinds = {i["kind"] for i in incidents}
     assert "outage" in kinds and "level_shift" not in kinds  # the shift happened on day 2
+
+
+def test_collect_command_runs_briefly(tmp_path):
+    out = tmp_path / "live.db"
+    res = runner.invoke(app, ["collect", "-o", str(out), "--interval", "0.2", "--duration", "1s"])
+    assert res.exit_code == 0, res.output
+    assert "wrote" in res.output and out.exists()
+    res = runner.invoke(app, ["collect", "-o", str(out), "--no-system"])
+    assert res.exit_code != 0  # nothing to collect
