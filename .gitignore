@@ -1,0 +1,25 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# generated data and reports
+*.db
+*.db-journal
+netpulse-report*.html
+netpulse-report*.md
+/out/
+!examples/*.html
+
+.env
+.DS_Store
+.vscode/
+.idea/
