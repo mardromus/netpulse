@@ -56,3 +56,10 @@ def test_import_csv_and_quiet_generate(tmp_path):
 def test_ask_command(db):
     res = runner.invoke(app, ["ask", str(db), "which link needs a capacity upgrade?"])
     assert res.exit_code == 0 and "core-rtr-1/xe-0/0/1" in res.output
+
+
+def test_last_window_limits_analysis(db):
+    res = runner.invoke(app, ["detect", str(db), "--json", "--last", "2d"])
+    incidents = json.loads(res.output)
+    kinds = {i["kind"] for i in incidents}
+    assert "outage" in kinds and "level_shift" not in kinds  # the shift happened on day 2

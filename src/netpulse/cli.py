@@ -51,14 +51,20 @@ def _eval_table(ev) -> Table:
     return t
 
 
-def _analyze(db: Path, sensitivity: float = 1.0):
+LAST_HELP = "only analyse the final window of the data, e.g. 24h or 2d"
+
+
+def _analyze(db: Path, sensitivity: float = 1.0, last: str | None = None):
+    import pandas as pd
+
     from .detect import DetectOptions
     from .pipeline import analyze_store
 
     if not db.exists():
         raise typer.BadParameter(f"{db} does not exist")
+    window = pd.Timedelta(seconds=_duration(last)) if last else None
     with console.status("analysing"):
-        return analyze_store(Store(db), DetectOptions(sensitivity=sensitivity))
+        return analyze_store(Store(db), DetectOptions(sensitivity=sensitivity), window)
 
 
 def _write_reports(result, html: Path | None, md: Path | None, js: Path | None, ai: bool, inline: bool):
@@ -166,9 +172,10 @@ def detect(
     db: Path = typer.Argument(..., exists=True),
     as_json: bool = typer.Option(False, "--json"),
     sensitivity: float = typer.Option(1.0, help=">1 flags smaller deviations, <1 only larger ones"),
+    last: str = typer.Option(None, help=LAST_HELP),
 ):
     """Detect anomalies and print incidents."""
-    r = _analyze(db, sensitivity)
+    r = _analyze(db, sensitivity, last)
     if as_json:
         print(json.dumps([i.to_dict() for i in r.incidents], indent=2))
         return
@@ -190,9 +197,10 @@ def report(
     ai: bool = typer.Option(False, "--ai", help="write the narrative with an LLM (verified)"),
     inline: bool = typer.Option(False, "--inline", help="embed plotly.js for offline viewing"),
     sensitivity: float = typer.Option(1.0, help="detector sensitivity multiplier"),
+    last: str = typer.Option(None, help=LAST_HELP),
 ):
     """Build the analytics and anomaly report."""
-    r = _analyze(db, sensitivity)
+    r = _analyze(db, sensitivity, last)
     _write_reports(r, out, md, js, ai, inline)
 
 
