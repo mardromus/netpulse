@@ -97,3 +97,13 @@ def test_no_false_alarms_outside_incidents(generated_detection):
         near = [t for t in g.truth if s.start < t.end + pd.Timedelta("1h")
                 and s.end > t.start - pd.Timedelta("1h")]
         assert near, f"false alarm: {s.entity} {s.metric} at {s.start}"
+
+
+def test_sensitivity_scales_thresholds():
+    s = diurnal()
+    s.iloc[1000:1004] *= 1.3  # a modest bump
+    strict = detect_series(s, "e", "rx_bps", opts=DetectOptions(sensitivity=0.5))
+    keen = detect_series(s, "e", "rx_bps", opts=DetectOptions(sensitivity=2.0))
+    assert keen.flags.iloc[1000:1004].sum() >= strict.flags.iloc[1000:1004].sum()
+    assert not strict.flags.iloc[1000:1004].any()
+    assert keen.flags.iloc[1000:1004].any()

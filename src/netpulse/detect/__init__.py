@@ -36,6 +36,7 @@ class DetectOptions:
     min_points: int = 2
     merge_gap: int = 1
     seed: int = 0
+    sensitivity: float = 1.0  # >1 flags smaller deviations, <1 only larger ones
 
 
 # (relative floor, absolute floor) by metric group
@@ -146,7 +147,7 @@ def detect_series(s: pd.Series, entity: str, metric: str, attrs: dict | None = N
     spec = spec_for(metric)
     group = spec.group if spec else "traffic"
     worse_up = spec.higher_is_worse if spec else True
-    results, profile = all_univariate(s, metric, group, attrs, opts.use_stl)
+    results, profile = all_univariate(s, metric, group, attrs, opts.use_stl, opts.sensitivity)
     by = {r.name: r for r in results}
     z = lambda n: by[n].score if n in by else pd.Series(0.0, index=s.index)  # noqa: E731
     seas, loc, stl_s, cus, thr = z("seasonal"), z("local"), z("stl"), z("cusum"), z("threshold")

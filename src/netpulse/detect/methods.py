@@ -144,13 +144,17 @@ def threshold(s: pd.Series, metric: str, attrs: dict | None = None) -> DetectorR
 
 
 def all_univariate(s: pd.Series, metric: str, group: str, attrs: dict | None = None,
-                   use_stl: bool = True) -> tuple[list[DetectorResult], pd.Series]:
-    """Run every applicable univariate detector. Returns (results, profile)."""
+                   use_stl: bool = True, sensitivity: float = 1.0) -> tuple[list[DetectorResult], pd.Series]:
+    """Run every applicable univariate detector. Returns (results, profile).
+
+    ``sensitivity`` scales the z-score thresholds: 2.0 flags deviations half as
+    large, 0.5 only flags ones twice as large."""
+    k = 1.0 / max(sensitivity, 1e-3)
     profile = seasonal_profile(s)
     relative = group in RELATIVE_GROUPS
-    results = [seasonal(s, profile, relative), local(s, profile, relative)]
+    results = [seasonal(s, profile, relative, z=4.5 * k), local(s, profile, relative, z=5.0 * k)]
     if use_stl:
-        r = stl(s)
+        r = stl(s, z=4.5 * k)
         if r is not None:
             results.append(r)
     if group in ("traffic", "connections"):
